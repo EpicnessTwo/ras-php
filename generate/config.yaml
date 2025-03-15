@@ -1,0 +1,9 @@
+additionalProperties:
+  artifactVersion: 0.15.3
+  composerPackageName: epicnesstwo/ras-php
+  developerOrganization: "EpicKitty"
+  developerOrganizationUrl: https://synergi.tech
+  invokerPackage: EpicKitty\Ras
+  licenseName: MIT
+  packageName: RAS-PHP
+  variableNamingConvention: camelCase

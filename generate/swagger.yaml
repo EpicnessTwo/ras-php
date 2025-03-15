@@ -1,0 +1,717 @@
+openapi: 3.0.3
+info:
+  title: User Management API
+  description: API that provides management functionality for Retro AIM Server operators.
+  version: 1.0.0
+paths:
+  /user:
+    get:
+      summary: Get all users
+      description: Retrieve a list of all user accounts.
+      responses:
+        '200':
+          description: Successful response containing a list of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: User's unique identifier.
+                    screen_name:
+                      type: string
+                      description: User's AIM screen name or ICQ UIN.
+                    is_icq:
+                      type: boolean
+                      description: If true, indicates an ICQ user instead of an AIM user.
+                    suspended_status:
+                      type: string
+                      description: User's suspended status
+    post:
+      summary: Create a new user
+      description: Create a new AIM or ICQ user account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - screen_name
+                - password
+              properties:
+                screen_name:
+                  type: string
+                  description: The user's AIM screen name or ICQ UIN.
+                password:
+                  type: string
+                  description: The user's password for account creation.
+      responses:
+        '201':
+          description: User account created successfully.
+        '400':
+          description: Bad request. Invalid input data.
+        '409':
+          description: Conflict. A user with the specified screen name or ICQ UIN already exists.
+    delete:
+      summary: Delete a user
+      description: Delete a user account specified by their screen name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                screen_name:
+                  type: string
+                  description: The screen name of the user to delete.
+      responses:
+        '204':
+          description: User deleted successfully.
+        '404':
+          description: User not found.
+
+  /user/{screenname}/account:
+    get:
+      summary: Get account details for a specific screen name.
+      description: Retrieve account details for a specific screen name.
+      parameters:
+        - in: path
+          name: screenname
+          schema:
+            type: string
+          description: User's AIM screen name or ICQ UIN.
+          required: true
+      responses:
+        '200':
+          description: Successful response containing account details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: User's unique identifier.
+                  screen_name:
+                    type: string
+                    description: User's AIM screen name or ICQ UIN.
+                  profile:
+                    type: string
+                    description: User's AIM profile HTML.
+                  email_address:
+                    type: string
+                    description: User's email address
+                  confirmed:
+                    type: boolean
+                    description: User's account confirmation status
+                  is_icq:
+                    type: boolean
+                    description: If true, indicates an ICQ user instead of an AIM user.
+                  suspended_status:
+                    type: string
+                    description: User's suspended status
+        '404':
+          description: User not found.
+    patch:
+      summary: Update a user account
+      description: Update attributes for a user account
+      parameters:
+        - in: path
+          name: screenname
+          schema:
+            type: string
+          description: User's AIM screen name or ICQ UIN.
+          required: true
+      responses:
+        '204':
+          description: Successfully updated user account
+        '304':
+          description: Did not modify user account
+        '400':
+          description: Bad request when modifying user account
+        '404':
+          description: User not found
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                suspended_status:
+                  type: string
+                  nullable: true
+                  enum: [deleted, expired, suspended, suspended_age]
+                  description: The suspended status of the account
+
+  /user/{screenname}/icon:
+    get:
+      summary: Get AIM buddy icon for a screen name
+      description: Retrieve account buddy icon for a specific screen name.
+      parameters:
+        - in: path
+          name: screenname
+          schema:
+            type: string
+          description: User's AIM screen name or ICQ UIN.
+          required: true
+      responses:
+        '200':
+          description: Successful response containing buddy icon bytes
+          content:
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: User not found, or user has no buddy icon
+
+  /session:
+    get:
+      summary: Get active sessions
+      description: Retrieve a list of active sessions of logged in users.
+      responses:
+        '200':
+          description: Successful response containing a list of active sessions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: The number of active sessions.
+                  sessions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: User's unique identifier.
+                        screen_name:
+                          type: string
+                          description: User's AIM screen name or ICQ UIN.
+                        online_seconds:
+                          type: number
+                          description: Number of seconds this user session has been online.
+                        away_message:
+                          type: string
+                          description: User's AIM away message HTML. Empty if the user is not away.
+                        idle_seconds:
+                          type: number
+                          description: Number of seconds this user session has been idle. 0 if not idle.
+                        is_icq:
+                          type: boolean
+                          description: If true, indicates an ICQ user instead of an AIM user.
+                        remote_addr:
+                          type: string
+                          description: Remote IP address of the user's connection to BOS or TOC
+                        remote_port:
+                          type: integer
+                          description: Remote port number of the user's connection to BOS or TOC
+
+  /session/{screenname}:
+    get:
+      summary: Get active sessions for a given screen name or UIN.
+      description: Retrieve a list of active sessions of a specific logged in user.
+      parameters:
+        - in: path
+          name: screenname
+          schema:
+            type: string
+          description: User's AIM screen name or ICQ UIN.
+          required: true
+      responses:
+        '200':
+          description: Successful response containing a list of active sessions for the given screen name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: The number of active sessions.
+                  sessions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: User's unique identifier.
+                        screen_name:
+                          type: string
+                          description: User's AIM screen name or ICQ UIN.
+                        online_seconds:
+                          type: number
+                          description: Number of seconds this user session has been online.
+                        away_message:
+                          type: string
+                          description: User's AIM away message HTML. Empty if the user is not away.
+                        idle_seconds:
+                          type: number
+                          description: Number of seconds this user session has been idle. 0 if not idle.
+                        is_icq:
+                          type: boolean
+                          description: If true, indicates an ICQ user instead of an AIM user.
+                        remote_addr:
+                          type: string
+                          description: Remote IP address of the user's connection to BOS or TOC
+                        remote_port:
+                          type: integer
+                          description: Remote port number of the user's connection to BOS or TOC
+        '404':
+          description: User not found.
+    delete:
+      summary: Delete active sessions for a given screen name or UIN.
+      description: Disconnect any active sessions of a specific logged in user.
+      parameters:
+        - in: path
+          name: screenname
+          schema:
+            type: string
+          description: User's AIM screen name or ICQ UIN.
+          required: true
+      responses:
+        '204':
+          description: Session deleted successfully
+        '404':
+          description: Session not found
+
+  /user/password:
+    put:
+      summary: Set a user's password
+      description: Update the password for a user specified by their screen name or ICQ UIN.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - screen_name
+                - password
+              properties:
+                screen_name:
+                  type: string
+                  description: The AIM screen name or ICQ UIN of the user whose password is to be updated.
+                password:
+                  type: string
+                  description: The new password for the user.
+      responses:
+        '204':
+          description: Password updated successfully.
+        '400':
+          description: Bad request. Invalid input data.
+        '404':
+          description: User not found.
+
+  /chat/room/public:
+    get:
+      summary: List all public AIM chat rooms
+      description: Retrieve a list of all public AIM chat rooms in exchange 5.
+      responses:
+        '200':
+          description: Successful response containing a list of chat rooms.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: Name of the chat room.
+                    create_time:
+                      type: string
+                      format: date-time
+                      description: The timestamp when the chat room was created.
+                    participants:
+                      type: array
+                      description: List of participants in the chat room.
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            description: User's unique identifier.
+                          screen_name:
+                            type: string
+                            description: User's AIM screen name.
+
+    post:
+      summary: Create a new public chat room
+      description: Create a new public chat room in exchange 5.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the chat room.
+      responses:
+        '201':
+          description: Chat room created successfully.
+        '400':
+          description: Bad request. Invalid input data.
+        '409':
+          description: Chat room already exists.
+
+  /chat/room/private:
+    get:
+      summary: List all private AIM chat rooms
+      description: Retrieve a list of all private AIM chat rooms in exchange 4.
+      responses:
+        '200':
+          description: Successful response containing a list of chat rooms.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: Name of the chat room.
+                    create_time:
+                      type: string
+                      format: date-time
+                      description: The timestamp when the chat room was created.
+                    creator_id:
+                      type: string
+                      description: The chat room creator user ID.
+                    participants:
+                      type: array
+                      description: List of participants in the chat room.
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            description: User's unique identifier.
+                          screen_name:
+                            type: string
+                            description: User's AIM screen name.
+
+  /instant-message:
+    post:
+      summary: Send an instant message
+      description: Send an instant message from one user to another. No error is raised if the recipient does not exist or the user is offline. The sender screen name does not need to exist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: The AIM screen name or ICQ UIN of the sender.
+                to:
+                  type: string
+                  description: The AIM screen name or ICQ UIN of the recipient.
+                text:
+                  type: string
+                  description: The text content of the message.
+      responses:
+        '200':
+          description: Message sent successfully.
+        '400':
+          description: Bad request. Invalid input data.
+
+  /version:
+    get:
+      summary: Get build information of RAS.
+      description: Retrieve the build version, git commit, and build date of the running RAS binary.
+      responses:
+        '200':
+          description: Successful response containing the build information.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: The release version number.
+                  commit:
+                    type: string
+                    description: The latest git commit hash in this build.
+                  date:
+                    type: string
+                    description: The build date and timestamp in RFC3339 format.
+
+  /directory/category:
+    get:
+      summary: Get all keyword categories
+      description: Retrieve a list of all keyword categories.
+      responses:
+        '200':
+          description: Successful response containing a list of keyword categories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: The unique identifier of the keyword category.
+                    name:
+                      type: string
+                      description: The name of the keyword category.
+    post:
+      summary: Create a new keyword category
+      description: Create a new keyword category.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: The name of the keyword category.
+      responses:
+        '201':
+          description: Keyword category created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The ID keyword category.
+                  name:
+                    type: string
+                    description: The name of the keyword category.
+        '400':
+          description: Malformed input body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '409':
+          description: A category with the specified name already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /directory/category/{id}:
+    delete:
+      summary: Delete a keyword category
+      description: Delete a keyword category specified by its ID.
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the keyword category.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Keyword category deleted successfully.
+        '400':
+          description: Invalid category ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Keyword category not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '409':
+          description: The keyword category is currently in use and cannot be deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /directory/category/{id}/keyword:
+    get:
+      summary: Get all keywords in a category
+      description: Retrieve a list of all keywords in the specified category.
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the keyword category.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response containing a list of keywords.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: The unique identifier of the keyword.
+                    name:
+                      type: string
+                      description: The name of the keyword.
+        '400':
+          description: Invalid category ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Keyword category not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /directory/keyword:
+    post:
+      summary: Create a new keyword.
+      description: Create a new keyword in a category.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - category_id
+                - name
+              properties:
+                category_id:
+                  type: integer
+                  description: The ID of the parent keyword category.
+                name:
+                  type: string
+                  description: The name of the keyword.
+      responses:
+        '201':
+          description: Keyword created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The keyword ID.
+                  name:
+                    type: string
+                    description: The name of the keyword.
+        '400':
+          description: Malformed input body.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Parent keyword category not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '409':
+          description: A keyword with the specified name already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /directory/keyword/{id}:
+    delete:
+      summary: Delete a keyword
+      description: Delete a keyword specified by its ID.
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the keyword.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Keyword deleted successfully.
+        '404':
+          description: Keyword not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '409':
+          description: Conflict. The keyword is currently in use and cannot be deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
